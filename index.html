@@ -21,17 +21,17 @@ button{cursor:pointer;border:none;outline:none;}
 .app{position:relative;width:100%;max-width:500px;padding:20px;}
 .start-card, .quiz-card, .result-card{background:var(--card);padding:24px;border-radius:20px;text-align:center;box-shadow:0 0 15px rgba(0,0,0,.5);}
 .start-card h1, .result-card h1{margin-bottom:16px;}
-.start-card button, .option-btn, #pause-btn, #reset-btn, #unpause-btn{display:block;margin:10px auto;padding:10px 20px;border-radius:50px;background:var(--primary);color:#fff;font-size:16px;transition:0.2s;}
-.start-card button:hover, .option-btn:hover, #pause-btn:hover, #reset-btn:hover, #unpause-btn:hover{background:#3b82f6;}
+.start-card button, .option-btn, #pause-btn, #reset-btn, #unpause-btn-overlay{display:block;margin:10px auto;padding:10px 20px;border-radius:50px;background:var(--primary);color:#fff;font-size:16px;transition:0.2s;text-align:center;}
+.start-card button:hover, .option-btn:hover, #pause-btn:hover, #reset-btn:hover, #unpause-btn-overlay:hover{background:#3b82f6;}
 .option-btn{width:80%;text-align:left;display:flex;align-items:center;justify-content:flex-start;gap:10px;}
 .progress-bar{height:12px;background:#1e293b;border-radius:6px;overflow:hidden;margin:10px 0;}
 .progress-fill{height:100%;background:#3b82f6;width:0%;transition:width 0.3s;}
 #timer{font-weight:600;float:right;margin-top:-40px;margin-right:10px;}
 #question-counter{float:left;margin-top:-40px;margin-left:10px;}
 #pause-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:none;align-items:center;justify-content:center;border-radius:20px;z-index:10;flex-direction:column;}
-#pause-overlay h2{color:#fff;margin-bottom:20px;}
-#unpause-btn, #pause-btn, #reset-btn{border-radius:50px;}
+#pause-overlay h2{color:#fff;margin-bottom:20px;text-align:center;}
 #toast{position:fixed;bottom:20px;right:20px;background:#222;padding:12px 20px;border-radius:12px;color:#fff;opacity:0;pointer-events:none;transition:opacity .3s;text-align:center;}
+#reset-btn.active{background:#000;color:#fff;}
 </style>
 </head>
 <body>
@@ -64,12 +64,12 @@ button{cursor:pointer;border:none;outline:none;}
 <div id="options"></div>
 <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 <button id="pause-btn" onclick="togglePause()">Pause</button>
-<button id="unpause-btn" style="display:none;" onclick="togglePause()">Unpause</button>
 <button id="reset-btn" onclick="resetQuiz()">Reset</button>
+<button id="main-menu-btn" onclick="goToStart()">Main Menu</button>
 </div>
 
 <!-- Pause Overlay -->
-<div id="pause-overlay"><h2>Paused</h2><button id="unpause-btn-overlay" class="option-btn" style="border-radius:50px;" onclick="togglePause()">Resume</button></div>
+<div id="pause-overlay"><h2>Paused</h2><button id="unpause-btn-overlay" class="option-btn" onclick="togglePause()">Resume</button></div>
 
 <!-- Result Card -->
 <div class="result-card" id="result-card" style="display:none;"><h1>Quiz Complete!</h1>
@@ -123,14 +123,20 @@ function renderQuestion(){
   });
   document.getElementById('question-counter').textContent=`${currentIndex+1}/${data.length}`;
   document.getElementById('progress-fill').style.width=`${((currentIndex)/data.length)*100}%`;
+  timeLeft=difficulty==='easy'?30:difficulty==='medium'?20:10;
+  document.getElementById('timer').textContent=`${timeLeft}s`;
+  document.getElementById('reset-btn').classList.remove('active');
 }
 
 function answer(selected, correct){
   if(selected===correct) score++;
   currentIndex++;
+  timeLeft=difficulty==='easy'?30:difficulty==='medium'?20:10;
   if(currentIndex>=data.length){
     endQuiz();
-  } else renderQuestion();
+  } else {
+    renderQuestion();
+  }
 }
 
 function endQuiz(){
@@ -143,8 +149,6 @@ function endQuiz(){
 }
 
 function startTimer(){
-  timeLeft=difficulty==='easy'?30:difficulty==='medium'?20:10;
-  document.getElementById('timer').textContent=`${timeLeft}s`;
   clearInterval(timerInterval);
   timerInterval=setInterval(()=>{
     if(!paused){
@@ -155,7 +159,6 @@ function startTimer(){
         if(currentIndex>=data.length){
           endQuiz();
         } else renderQuestion();
-        timeLeft=difficulty==='easy'?30:difficulty==='medium'?20:10;
       }
     }
   },1000);
@@ -163,21 +166,53 @@ function startTimer(){
 
 function togglePause(){
   paused=!paused;
-  document.getElementById('pause-overlay').style.display=paused?'flex':'none';
-  document.getElementById('unpause-btn').style.display=paused?'block':'none';
-  document.getElementById('unpause-btn-overlay').style.display=paused?'block':'none';
+  const overlay=document.getElementById('pause-overlay');
+  overlay.style.display=paused?'flex':'none';
 }
 
 function resetQuiz(){
-  if(confirm('Restart this level? Press Cancel to go to main menu.')){
-    startQuiz(difficulty);
-  } else goToStart();
+  paused=true;
+  const overlay=document.createElement('div');
+  overlay.id='reset-overlay';
+  overlay.style.position='absolute';
+  overlay.style.top='0';
+  overlay.style.left='0';
+  overlay.style.width='100%';
+  overlay.style.height='100%';
+  overlay.style.background='#000';
+  overlay.style.display='flex';
+  overlay.style.flexDirection='column';
+  overlay.style.alignItems='center';
+  overlay.style.justifyContent='center';
+  overlay.style.borderRadius='20px';
+  overlay.style.zIndex='20';
+  overlay.innerHTML=`<h2 style="color:#fff;margin-bottom:20px;text-align:center;">Restart this level?</h2><div style="display:flex;gap:10px;"><button id='restart-yes' class='option-btn'>Yes</button><button id='restart-no' class='option-btn'>No</button><button id='restart-menu' class='option-btn'>Main Menu</button></div>`;
+  document.querySelector('.app').appendChild(overlay);
+  const resetBtn=document.getElementById('reset-btn');
+  resetBtn.classList.add('active');
+  document.getElementById('restart-yes').onclick=()=>{
+    document.querySelector('.app').removeChild(overlay);
+    paused=false;
+    renderQuestion();
+    startTimer();
+    resetBtn.classList.remove('active');
+  };
+  document.getElementById('restart-no').onclick=()=>{
+    document.querySelector('.app').removeChild(overlay);
+    paused=false;
+    resetBtn.classList.remove('active');
+  };
+  document.getElementById('restart-menu').onclick=()=>{
+    document.querySelector('.app').removeChild(overlay);
+    goToStart();
+  };
 }
 
 function goToStart(){
   document.getElementById('result-card').style.display='none';
   document.getElementById('quiz-card').style.display='none';
   document.getElementById('start-screen').style.display='block';
+  clearInterval(timerInterval);
 }
 </script>
 </body>

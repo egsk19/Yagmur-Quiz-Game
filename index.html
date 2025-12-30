@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Yagmur Spelling Quiz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -21,23 +21,20 @@ button{cursor:pointer;border:none;outline:none;}
 .app{position:relative;width:100%;max-width:500px;padding:20px;}
 .start-card, .quiz-card, .result-card{background:var(--card);padding:24px;border-radius:20px;text-align:center;box-shadow:0 0 15px rgba(0,0,0,.5);}
 .start-card h1, .result-card h1{margin-bottom:16px;}
-.start-card button, .option-btn, #pause-btn, #reset-btn, #unpause-btn-overlay{display:block;margin:10px auto;padding:10px 20px;border-radius:50px;background:var(--primary);color:#fff;font-size:16px;transition:0.2s;text-align:center;}
-.start-card button:hover, .option-btn:hover, #pause-btn:hover, #reset-btn:hover, #unpause-btn-overlay:hover{background:#3b82f6;}
+.start-card button, .option-btn, #pause-btn, #reset-btn, .restart-btn, .main-menu-confirm-btn{display:block;margin:10px auto;padding:10px 20px;border-radius:50px;background:var(--primary);color:#fff;font-size:16px;transition:0.2s;text-align:center;}
+.start-card button:hover, .option-btn:hover, #pause-btn:hover, #reset-btn:hover, .restart-btn:hover, .main-menu-confirm-btn:hover{background:#3b82f6;}
 .option-btn{width:80%;text-align:left;display:flex;align-items:center;justify-content:flex-start;gap:10px;}
 .progress-bar{height:12px;background:#1e293b;border-radius:6px;overflow:hidden;margin:10px 0;}
 .progress-fill{height:100%;background:#3b82f6;width:0%;transition:width 0.3s;}
 #timer{font-weight:600;float:right;margin-top:-40px;margin-right:10px;}
 #question-counter{float:left;margin-top:-40px;margin-left:10px;}
-#pause-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:none;align-items:center;justify-content:center;border-radius:20px;z-index:10;flex-direction:column;}
-#pause-overlay h2{color:#fff;margin-bottom:20px;text-align:center;}
-#toast{position:fixed;bottom:20px;right:20px;background:#222;padding:12px 20px;border-radius:12px;color:#fff;opacity:0;pointer-events:none;transition:opacity .3s;text-align:center;}
-#reset-btn.active{background:#000;color:#fff;}
+#pause-overlay, #reset-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:none;align-items:center;justify-content:center;border-radius:20px;z-index:10;flex-direction:column;}
+.correct{background:#16a34a;color:#fff;}
+.incorrect{background:#dc2626;color:#fff;}
 </style>
 </head>
 <body>
 <div class="app">
-
-<!-- Start Screen -->
 <div class="start-card" id="start-screen">
 <h1>Yagmur Spelling Quiz</h1>
 <p>Test your knowledge of Yagmur's unique spellings!</p>
@@ -45,7 +42,7 @@ button{cursor:pointer;border:none;outline:none;}
 <h3>Instructions:</h3>
 <ul style="text-align:left;"> 
 <li>Choose a difficulty: Easy (30s per word), Medium (20s per word), Hard (10s per word).</li>
-<li>Each question has 4 options: 1 correct and 3 wrong variations.</li>
+<li>Each question has 4 options: 1 correct (Yagmur's spelling) and 3 wrong variations.</li>
 <li>Progress is shown with a bar and question counter.</li>
 <li>You can pause the game, but the options will be hidden while paused.</li>
 <li>Your final score shows how well you know Yagmur's spellings!</li>
@@ -56,7 +53,6 @@ button{cursor:pointer;border:none;outline:none;}
 <button onclick="startQuiz('hard')">Hard</button>
 </div>
 
-<!-- Quiz Card -->
 <div class="quiz-card" id="quiz-card" style="display:none;">
 <div id="question-counter">1/1</div>
 <div id="timer">30s</div>
@@ -65,24 +61,20 @@ button{cursor:pointer;border:none;outline:none;}
 <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 <button id="pause-btn" onclick="togglePause()">Pause</button>
 <button id="reset-btn" onclick="resetQuiz()">Reset</button>
-<button id="main-menu-btn" onclick="goToStart()">Main Menu</button>
 </div>
 
-<!-- Pause Overlay -->
-<div id="pause-overlay"><h2>Paused</h2><button id="unpause-btn-overlay" class="option-btn" onclick="togglePause()">Resume</button></div>
-
-<!-- Result Card -->
-<div class="result-card" id="result-card" style="display:none;"><h1>Quiz Complete!</h1>
+<div class="result-card" id="result-card" style="display:none;">
+<h1>Quiz Complete!</h1>
 <p id="score-text"></p>
-<button onclick="goToStart()">Main Menu</button>
+<p id="level-text"></p>
+<button onclick="goToStartDirect()">Main Menu</button>
 </div>
 
-<div id="toast">Copied! 🥹</div>
 <p style="text-align:center;margin-top:20px;opacity:.6;">Credits: egsk.4 · v1.0</p>
 
 <script>
 const data=[
-{wrong:'Rasist',right:'Racist'},{wrong:'Sence',right:'Sense'},{wrong:'Congrajulashins',right:'Congrats'},{wrong:'Awsom',right:'Awesome'},{wrong:'Beget',right:'Baguette'},{wrong:'Salooshin',right:'Solution'},{wrong:'Deceshin',right:'Decision'},{wrong:'Masheeen',right:'Machine'},{wrong:'Problim',right:'Problem'},{wrong:'Exapshin',right:'Exception'},{wrong:'Conequit',right:'Connect'},{wrong:'Nolig',right:'Knowledge'},{wrong:'Jorgis',right:'Gorgeous'},{wrong:'Baisicaly',right:'Basically'},{wrong:'Sheeld at dawn',right:'Sheldon'},{wrong:'Sirios',right:'Serious'},{wrong:'Fought',right:'Thought'},{wrong:'Retardad',right:'Retarded'},{wrong:'Sipiration',right:'Separation'},{wrong:'Wiskir',right:'Whisker'},{wrong:'Mastash',right:'Moustache'},{wrong:'Minout',right:'Minute'},{wrong:'Burgeraly',right:'Burglary'},{wrong:'Dicshinary',right:'Dictionary'},{wrong:'Peaple',right:'People'},{wrong:'Oh em gee',right:'OMG'},{wrong:'Apiranitaly',right:'Apparently'},{wrong:'Properaly',right:'Properly'},{wrong:'Hibijibis',right:'Hijabis'},{wrong:'Perishian',right:'Persian'},{wrong:'Superfragalistixfradgilosas',right:'Supercalifragilisticexpialidocious'},{wrong:'Litirily',right:'Literally'},{wrong:'Kat',right:'Cat'},{wrong:'Prood',right:'Proud'},{wrong:'Tantroim',right:'Tantrum'},{wrong:'Boi',right:'Boy'},{wrong:'Isoki',right:"It's okay"}
+{wrong:'Racist',right:'Rasist'},{wrong:'Sense',right:'Sence'},{wrong:'Congrats',right:'Congrajulashins'},{wrong:'Awesome',right:'Awsom'},{wrong:'Baguette',right:'Beget'},{wrong:'Solution',right:'Salooshin'},{wrong:'Decision',right:'Deceshin'},{wrong:'Machine',right:'Masheeen'},{wrong:'Problem',right:'Problim'},{wrong:'Exception',right:'Exapshin'},{wrong:'Connect',right:'Conequit'},{wrong:'Knowledge',right:'Nolig'},{wrong:'Gorgeous',right:'Jorgis'},{wrong:'Basically',right:'Baisicaly'},{wrong:'Sheldon',right:'Sheeld at dawn'},{wrong:'Serious',right:'Sirios'},{wrong:'Thought',right:'Fought'},{wrong:'Retarded',right:'Retardad'},{wrong:'Separation',right:'Sipiration'},{wrong:'Whisker',right:'Wiskir'},{wrong:'Moustache',right:'Mastash'},{wrong:'Minute',right:'Minout'},{wrong:'Burglary',right:'Burgeraly'},{wrong:'Dictionary',right:'Dicshinary'},{wrong:'People',right:'Peaple'},{wrong:'OMG',right:'Oh em gee'},{wrong:'Apparently',right:'Apiranitaly'},{wrong:'Properly',right:'Properaly'},{wrong:'Hijabis',right:'Hibijibis'},{wrong:'Persian',right:'Perishian'},{wrong:'Supercalifragilisticexpialidocious',right:'Superfragalistixfradgilosas'},{wrong:'Literally',right:'Litirily'},{wrong:'Cat',right:'Kat'},{wrong:'Proud',right:'Prood'},{wrong:'Tantrum',right:'Tantroim'},{wrong:"It's okay",right:'Isoki'},{wrong:'Boy',right:'Boi'}
 ];
 
 let currentIndex=0;
@@ -98,7 +90,6 @@ function startQuiz(level){
   document.getElementById('quiz-card').style.display='block';
   currentIndex=0;
   score=0;
-  timeLeft=difficulty==='easy'?30:difficulty==='medium'?20:10;
   renderQuestion();
   startTimer();
 }
@@ -106,46 +97,51 @@ function startQuiz(level){
 function renderQuestion(){
   const q=data[currentIndex];
   document.getElementById('current-word').textContent=q.right;
+
   const optionsEl=document.getElementById('options');
   optionsEl.innerHTML='';
-  let options=[q.wrong,q.right];
+
+  let options=[q.wrong];
   while(options.length<4){
-    let rand=q.right.split('').sort(()=>Math.random()-0.5).join('');
+    let rand=q.wrong.split('').sort(()=>Math.random()-0.5).join('');
     if(!options.includes(rand)) options.push(rand);
   }
+  options.push(q.right);
   options=options.sort(()=>Math.random()-0.5);
+
   options.forEach(o=>{
     let btn=document.createElement('button');
     btn.textContent=o;
     btn.className='option-btn';
-    btn.onclick=()=>answer(o,q.right);
+    btn.onclick=()=>answer(o,q.right,btn);
     optionsEl.appendChild(btn);
   });
+
   document.getElementById('question-counter').textContent=`${currentIndex+1}/${data.length}`;
-  document.getElementById('progress-fill').style.width=`${((currentIndex)/data.length)*100}%`;
+  document.getElementById('progress-fill').style.width=`${(currentIndex/data.length)*100}%`;
+
   timeLeft=difficulty==='easy'?30:difficulty==='medium'?20:10;
   document.getElementById('timer').textContent=`${timeLeft}s`;
-  document.getElementById('reset-btn').classList.remove('active');
 }
 
-function answer(selected, correct){
-  if(selected===correct) score++;
-  currentIndex++;
-  timeLeft=difficulty==='easy'?30:difficulty==='medium'?20:10;
-  if(currentIndex>=data.length){
-    endQuiz();
-  } else {
-    renderQuestion();
-  }
-}
-
-function endQuiz(){
+function answer(selected, correct, btn){
   clearInterval(timerInterval);
-  document.getElementById('quiz-card').style.display='none';
-  document.getElementById('result-card').style.display='block';
-  const percent=Math.round((score/data.length)*100);
-  let msg=percent<40?"YDK Yagmur that well 😅":"They know her 😎";
-  document.getElementById('score-text').textContent=`Score: ${score}/${data.length} (${percent}%) - ${msg}`;
+  Array.from(document.getElementById('options').children).forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===correct) b.classList.add('correct');
+    else if(b===btn && b.textContent!==correct) b.classList.add('incorrect');
+  });
+
+  if(selected===correct) score++;
+
+  setTimeout(()=>{
+    currentIndex++;
+    if(currentIndex>=data.length) endQuiz();
+    else{
+      renderQuestion();
+      startTimer();
+    }
+  },800);
 }
 
 function startTimer(){
@@ -155,10 +151,12 @@ function startTimer(){
       timeLeft--;
       document.getElementById('timer').textContent=`${timeLeft}s`;
       if(timeLeft<=0){
+        Array.from(document.getElementById('options').children).forEach(b=>{
+          if(b.textContent===data[currentIndex].right) b.classList.add('correct');
+        });
         currentIndex++;
-        if(currentIndex>=data.length){
-          endQuiz();
-        } else renderQuestion();
+        if(currentIndex>=data.length) endQuiz();
+        else renderQuestion();
       }
     }
   },1000);
@@ -172,46 +170,29 @@ function togglePause(){
 
 function resetQuiz(){
   paused=true;
-  const overlay=document.createElement('div');
-  overlay.id='reset-overlay';
-  overlay.style.position='absolute';
-  overlay.style.top='0';
-  overlay.style.left='0';
-  overlay.style.width='100%';
-  overlay.style.height='100%';
-  overlay.style.background='#000';
-  overlay.style.display='flex';
-  overlay.style.flexDirection='column';
-  overlay.style.alignItems='center';
-  overlay.style.justifyContent='center';
-  overlay.style.borderRadius='20px';
-  overlay.style.zIndex='20';
-  overlay.innerHTML=`<h2 style="color:#fff;margin-bottom:20px;text-align:center;">Restart this level?</h2><div style="display:flex;gap:10px;"><button id='restart-yes' class='option-btn'>Yes</button><button id='restart-no' class='option-btn'>No</button><button id='restart-menu' class='option-btn'>Main Menu</button></div>`;
-  document.querySelector('.app').appendChild(overlay);
-  const resetBtn=document.getElementById('reset-btn');
-  resetBtn.classList.add('active');
-  document.getElementById('restart-yes').onclick=()=>{
-    document.querySelector('.app').removeChild(overlay);
-    paused=false;
-    renderQuestion();
-    startTimer();
-    resetBtn.classList.remove('active');
-  };
-  document.getElementById('restart-no').onclick=()=>{
-    document.querySelector('.app').removeChild(overlay);
-    paused=false;
-    resetBtn.classList.remove('active');
-  };
-  document.getElementById('restart-menu').onclick=()=>{
-    document.querySelector('.app').removeChild(overlay);
-    goToStart();
-  };
+  currentIndex=0;
+  score=0;
+  renderQuestion();
+  startTimer();
+  paused=false;
 }
 
-function goToStart(){
-  document.getElementById('result-card').style.display='none';
+function endQuiz(){
+  clearInterval(timerInterval);
   document.getElementById('quiz-card').style.display='none';
+  document.getElementById('result-card').style.display='block';
+  const percent=Math.round((score/data.length)*100);
+  let msg=percent<40?"YDK Yagmur that well 😅":"They know her 😎";
+  document.getElementById('score-text').textContent=`Score: ${score}/${data.length} (${percent}%) - ${msg}`;
+  document.getElementById('level-text').textContent=`Level Completed: ${difficulty.charAt(0).toUpperCase()+difficulty.slice(1)}`;
+}
+
+function goToStartDirect(){
+  document.getElementById('result-card').style.display='none';
   document.getElementById('start-screen').style.display='block';
+  currentIndex=0;
+  score=0;
+  paused=false;
   clearInterval(timerInterval);
 }
 </script>
